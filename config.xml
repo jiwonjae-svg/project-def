@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.projectd.deckdefense" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Project-D</name>
+    <description>Deck Building Roguelike Defense Game</description>
+    <author email="dev@projectd.com" href="https://projectd.com">Project-D Team</author>
+    
+    <content src="index.html" />
+    
+    <!-- Global Preferences -->
+    <preference name="DisallowOverscroll" value="true" />
+    <preference name="Orientation" value="portrait" />
+    <preference name="Fullscreen" value="true" />
+    <preference name="StatusBarOverlaysWebView" value="false" />
+    <preference name="StatusBarBackgroundColor" value="#1A1A2E" />
+    <preference name="StatusBarStyle" value="lightcontent" />
+    <preference name="BackgroundColor" value="#1A1A2E" />
+    <preference name="SplashMaintainAspectRatio" value="true" />
+    <preference name="FadeSplashScreen" value="true" />
+    <preference name="FadeSplashScreenDuration" value="500" />
+    <preference name="SplashScreenDelay" value="3000" />
+    <preference name="AutoHideSplashScreen" value="true" />
+    <preference name="ShowSplashScreenSpinner" value="false" />
+    <preference name="KeyboardDisplayRequiresUserAction" value="false" />
+    <preference name="KeyboardResize" value="false" />
+    <preference name="AllowInlineMediaPlayback" value="true" />
+    <preference name="MediaPlaybackRequiresUserAction" value="false" />
+    
+    <!-- Android Specific -->
+    <platform name="android">
+        <preference name="AndroidPersistentFileLocation" value="Compatibility" />
+        <preference name="AndroidLaunchMode" value="singleTask" />
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/icon/android/splash-icon.png" />
+        <preference name="KeepRunning" value="true" />
+        <preference name="LoadUrlTimeoutValue" value="60000" />
+        <preference name="android-minSdkVersion" value="24" />
+        <preference name="android-targetSdkVersion" value="33" />
+        
+        <!-- App Icons -->
+        <icon density="ldpi" src="res/icon/android/ldpi.png" />
+        <icon density="mdpi" src="res/icon/android/mdpi.png" />
+        <icon density="hdpi" src="res/icon/android/hdpi.png" />
+        <icon density="xhdpi" src="res/icon/android/xhdpi.png" />
+        <icon density="xxhdpi" src="res/icon/android/xxhdpi.png" />
+        <icon density="xxxhdpi" src="res/icon/android/xxxhdpi.png" />
+        
+        <!-- Splash Screens -->
+        <splash density="land-hdpi" src="res/splash/android/land-hdpi.png" />
+        <splash density="land-ldpi" src="res/splash/android/land-ldpi.png" />
+        <splash density="land-mdpi" src="res/splash/android/land-mdpi.png" />
+        <splash density="land-xhdpi" src="res/splash/android/land-xhdpi.png" />
+        <splash density="land-xxhdpi" src="res/splash/android/land-xxhdpi.png" />
+        <splash density="land-xxxhdpi" src="res/splash/android/land-xxxhdpi.png" />
+        <splash density="port-hdpi" src="res/splash/android/port-hdpi.png" />
+        <splash density="port-ldpi" src="res/splash/android/port-ldpi.png" />
+        <splash density="port-mdpi" src="res/splash/android/port-mdpi.png" />
+        <splash density="port-xhdpi" src="res/splash/android/port-xhdpi.png" />
+        <splash density="port-xxhdpi" src="res/splash/android/port-xxhdpi.png" />
+        <splash density="port-xxxhdpi" src="res/splash/android/port-xxxhdpi.png" />
+        
+        <!-- Permissions -->
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.VIBRATE" />
+            <uses-permission android:name="android.permission.WAKE_LOCK" />
+        </config-file>
+    </platform>
+    
+    <!-- iOS Specific -->
+    <platform name="ios">
+        <preference name="WKWebViewOnly" value="true" />
+        <preference name="deployment-target" value="13.0" />
+        <preference name="target-device" value="handset" />
+        <preference name="EnableViewportScale" value="false" />
+        <preference name="MediaTypesRequiringUserActionForPlayback" value="none" />
+        <preference name="AllowInlineMediaPlayback" value="true" />
+        <preference name="SwiftVersion" value="5" />
+        
+        <!-- App Icons -->
+        <icon height="180" src="res/icon/ios/icon-60@3x.png" width="180" />
+        <icon height="120" src="res/icon/ios/icon-60@2x.png" width="120" />
+        <icon height="167" src="res/icon/ios/icon-83.5@2x.png" width="167" />
+        <icon height="152" src="res/icon/ios/icon-76@2x.png" width="152" />
+        <icon height="76" src="res/icon/ios/icon-76.png" width="76" />
+        <icon height="120" src="res/icon/ios/icon-40@3x.png" width="120" />
+        <icon height="80" src="res/icon/ios/icon-40@2x.png" width="80" />
+        <icon height="40" src="res/icon/ios/icon-40.png" width="40" />
+        <icon height="58" src="res/icon/ios/icon-29@2x.png" width="58" />
+        <icon height="29" src="res/icon/ios/icon-29.png" width="29" />
+        <icon height="87" src="res/icon/ios/icon-29@3x.png" width="87" />
+        <icon height="1024" src="res/icon/ios/icon-1024.png" width="1024" />
+        
+        <!-- Splash Screens -->
+        <splash src="res/splash/ios/Default~iphone.png" width="320" height="480" />
+        <splash src="res/splash/ios/Default@2x~iphone.png" width="640" height="960" />
+        <splash src="res/splash/ios/Default-Portrait~ipad.png" width="768" height="1024" />
+        <splash src="res/splash/ios/Default-Portrait@2x~ipad.png" width="1536" height="2048" />
+        <splash src="res/splash/ios/Default-568h@2x~iphone.png" width="640" height="1136" />
+        <splash src="res/splash/ios/Default-667h.png" width="750" height="1334" />
+        <splash src="res/splash/ios/Default-736h.png" width="1242" height="2208" />
+        <splash src="res/splash/ios/Default-2436h.png" width="1125" height="2436" />
+        <splash src="res/splash/ios/Default-2688h.png" width="1242" height="2688" />
+        <splash src="res/splash/ios/Default-1792h.png" width="828" height="1792" />
+    </platform>
+    
+    <!-- Access Configuration -->
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-navigation href="*" />
+    
+    <!-- Plugins -->
+    <plugin name="cordova-plugin-device" spec="^2.1.0" />
+    <plugin name="cordova-plugin-splashscreen" spec="^6.0.2" />
+    <plugin name="cordova-plugin-statusbar" spec="^3.0.0" />
+    <plugin name="cordova-plugin-screen-orientation" spec="^3.0.2" />
+    <plugin name="cordova-plugin-insomnia" spec="^5.0.1" />
+    <plugin name="cordova-plugin-vibration" spec="^3.1.1" />
+    <plugin name="cordova-plugin-network-information" spec="^3.0.0" />
+    <plugin name="cordova-plugin-inappbrowser" spec="^5.0.0" />
+    
+    <!-- Engine -->
+    <engine name="android" spec="^12.0.0" />
+    <engine name="ios" spec="^7.0.0" />
+</widget>
