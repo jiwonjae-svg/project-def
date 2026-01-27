@@ -296,6 +296,7 @@ export class BattleScene extends Phaser.Scene {
     this.maxTowerCards = 100;
     this.cardScrollOffset = 0;
     this.visibleCards = 5;
+    this.occupiedTiles = new Set(); // Track occupied tower positions
     
     // Interaction modes
     this.isCardSelected = false;
@@ -712,11 +713,13 @@ export class BattleScene extends Phaser.Scene {
     topBarBg.fillGradientStyle(0x0a0a1a, 0x0a0a1a, 0x1a1a3a, 0x1a1a3a, 0.95);
     topBarBg.fillRect(0, 0, width, 130);
     topBarBg.setDepth(100);
+    topBarBg.setScrollFactor(0);
     this.addUIElement(topBarBg);
     
     // Top bar accent line
     const topAccent = this.add.rectangle(width / 2, 130, width, 3, 0x4a9eff, 0.8);
     topAccent.setDepth(100);
+    topAccent.setScrollFactor(0);
     this.addUIElement(topAccent);
     
     // Back button (rounded, modern)
@@ -724,16 +727,19 @@ export class BattleScene extends Phaser.Scene {
       this.showBackConfirmDialog();
     }, { width: 70, height: 55, color: 0x3a3a5a, fontSize: '32px', borderRadius: 12 });
     backBtn.setDepth(101);
+    backBtn.setScrollFactor(0);
     this.addUIElement(backBtn);
     
     // Gold panel (modern card style)
     const goldPanel = this.add.rectangle(width / 2 - 70, 45, 150, 55, 0x1a1a3a, 0.95);
     goldPanel.setStrokeStyle(2, 0xffd700, 0.8);
     goldPanel.setDepth(100);
+    goldPanel.setScrollFactor(0);
     this.addUIElement(goldPanel);
     
     const goldIcon = this.add.circle(width / 2 - 135, 45, 18, 0xffd700);
     goldIcon.setDepth(101);
+    goldIcon.setScrollFactor(0);
     this.addUIElement(goldIcon);
     
     this.goldText = this.add.text(width / 2 - 108, 45, `${this.battleState.gold}`, {
@@ -743,12 +749,14 @@ export class BattleScene extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0, 0.5).setDepth(101);
+    this.goldText.setScrollFactor(0);
     this.addUIElement(this.goldText);
     
     // Score panel (modern card style)
     const scorePanel = this.add.rectangle(width / 2 + 85, 45, 170, 55, 0x1a1a3a, 0.95);
     scorePanel.setStrokeStyle(2, 0x4caf50, 0.8);
     scorePanel.setDepth(100);
+    scorePanel.setScrollFactor(0);
     this.addUIElement(scorePanel);
     
     this.scoreText = this.add.text(width / 2 + 15, 45, `${this.battleState.score}`, {
@@ -758,6 +766,7 @@ export class BattleScene extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0, 0.5).setDepth(101);
+    this.scoreText.setScrollFactor(0);
     this.addUIElement(this.scoreText);
     
     // Multiplier
@@ -766,6 +775,7 @@ export class BattleScene extends Phaser.Scene {
       fontSize: '20px',
       color: '#ffd700'
     }).setOrigin(0, 0.5).setDepth(101);
+    this.multiplierText.setScrollFactor(0);
     this.addUIElement(this.multiplierText);
     
     // Position multiplier after creating score text
@@ -775,6 +785,7 @@ export class BattleScene extends Phaser.Scene {
     const timerPanel = this.add.rectangle(width / 2, 100, 300, 50, 0x0a2a4a, 0.95);
     timerPanel.setStrokeStyle(2, 0x4a9eff, 0.8);
     timerPanel.setDepth(100);
+    timerPanel.setScrollFactor(0);
     this.addUIElement(timerPanel);
     
     this.waveText = this.add.text(width / 2 - 120, 100, `Wave ${this.battleState.currentWave}`, {
@@ -784,6 +795,7 @@ export class BattleScene extends Phaser.Scene {
       stroke: '#000000',
       strokeThickness: 2
     }).setOrigin(0, 0.5).setDepth(101);
+    this.waveText.setScrollFactor(0);
     this.addUIElement(this.waveText);
     
     this.timerText = this.add.text(width / 2 + 90, 100, `${this.battleState.waveTimer}s`, {
@@ -791,12 +803,14 @@ export class BattleScene extends Phaser.Scene {
       fontSize: '28px',
       color: '#4a9eff'
     }).setOrigin(0.5).setDepth(101);
+    this.timerText.setScrollFactor(0);
     this.addUIElement(this.timerText);
     
     // Enemy count (prominent, at TOP next to wave info)
     const enemyPanel = this.add.rectangle(width / 2, 145, 220, 36, 0x3a1a1a, 0.95);
     enemyPanel.setStrokeStyle(2, 0xff6b6b, 0.8);
     enemyPanel.setDepth(100);
+    enemyPanel.setScrollFactor(0);
     this.addUIElement(enemyPanel);
     
     this.enemyCountText = this.add.text(width / 2, 145, `👾 0 / ${this.battleState.maxEnemies}`, {
@@ -804,12 +818,14 @@ export class BattleScene extends Phaser.Scene {
       fontSize: '18px',
       color: '#ff6b6b'
     }).setOrigin(0.5).setDepth(101);
+    this.enemyCountText.setScrollFactor(0);
     this.addUIElement(this.enemyCountText);
     
     // Warning timer panel
     this.warningPanel = this.add.rectangle(width / 2, height / 2 - 100, 360, 70, 0xff0000, 0.9);
     this.warningPanel.setStrokeStyle(4, 0xff4444);
     this.warningPanel.setDepth(200);
+    this.warningPanel.setScrollFactor(0);
     this.warningPanel.setVisible(false);
     this.addUIElement(this.warningPanel);
     
@@ -818,6 +834,7 @@ export class BattleScene extends Phaser.Scene {
       fontSize: '24px',
       color: '#ffffff'
     }).setOrigin(0.5).setDepth(201);
+    this.warningText.setScrollFactor(0);
     this.warningText.setVisible(false);
     this.addUIElement(this.warningText);
     
@@ -826,20 +843,20 @@ export class BattleScene extends Phaser.Scene {
   }
 
   createControlArea(width, height) {
-    // Sleek bottom panel background with gradient (increased height)
+    // Sleek bottom panel background with gradient (increased height) - HIGHEST DEPTH
     const bottomBg = this.add.graphics();
     bottomBg.fillGradientStyle(0x0d1b2a, 0x0d1b2a, 0x1b263b, 0x1b263b, 0.98);
     bottomBg.fillRect(0, height - 200, width, 200);
-    bottomBg.setDepth(100);
-    this.addUIElement(bottomBg);
+    bottomBg.setDepth(500); // Very high depth to be above all game elements
+    bottomBg.setScrollFactor(0); // Fixed to camera, not affected by zoom/pan
     
     // Top accent line (glowing effect)
     const bottomAccent = this.add.rectangle(width / 2, height - 200, width, 2, 0x00d4ff, 0.9);
-    bottomAccent.setDepth(100);
-    this.addUIElement(bottomAccent);
+    bottomAccent.setDepth(500);
+    bottomAccent.setScrollFactor(0); // Fixed to camera
     
     // Control buttons row (positioned higher, above cards)
-    const buttonY = height - 173;
+    const buttonY = height - 155;
     
     // Start button at map center bottom (modern neon style)
     const mapBottom = this.centerY + this.mapSize / 2;
@@ -847,7 +864,8 @@ export class BattleScene extends Phaser.Scene {
     this.startButton = new Button(this, startButtonScreen.x, startButtonScreen.y - 30, '▶ START', () => {
       this.startGameWithEffect();
     }, { width: 140, height: 45, color: 0x00c853, fontSize: '18px', borderRadius: 8 });
-    this.startButton.setDepth(102);
+    this.startButton.setDepth(501);
+    this.startButton.setScrollFactor(0);
     this.addUIElement(this.startButton);
     
     // Pulsing animation for start button
@@ -863,14 +881,16 @@ export class BattleScene extends Phaser.Scene {
     this.randomTowerButton = new Button(this, width / 2 - 75, buttonY, '🎲 Tower (20G)', () => {
       this.generateRandomTower();
     }, { width: 145, height: 40, color: 0x7b1fa2, fontSize: '15px', borderRadius: 8 });
-    this.randomTowerButton.setDepth(102);
+    this.randomTowerButton.setDepth(501);
+    this.randomTowerButton.setScrollFactor(0);
     this.addUIElement(this.randomTowerButton);
     
     // Sell mode button (center-right)
     this.sellModeButton = new Button(this, width / 2 + 75, buttonY, '💰 SELL', () => {
       this.startSellMode();
     }, { width: 110, height: 40, color: 0xe65100, fontSize: '15px', borderRadius: 8 });
-    this.sellModeButton.setDepth(102);
+    this.sellModeButton.setDepth(501);
+    this.sellModeButton.setScrollFactor(0);
     this.addUIElement(this.sellModeButton);
     
     // End sell mode button (hidden initially)
@@ -878,7 +898,8 @@ export class BattleScene extends Phaser.Scene {
       this.endSellMode();
     }, { width: 110, height: 40, color: 0xc62828, fontSize: '14px', borderRadius: 8 });
     this.endSellButton.setVisible(false);
-    this.endSellButton.setDepth(102);
+    this.endSellButton.setDepth(501);
+    this.endSellButton.setScrollFactor(0);
     this.addUIElement(this.endSellButton);
     
     // Skip button (right side, hidden initially)
@@ -886,7 +907,8 @@ export class BattleScene extends Phaser.Scene {
       this.skipToNextWave();
     }, { width: 120, height: 40, color: 0xf57c00, fontSize: '15px', borderRadius: 8 });
     this.skipButton.setVisible(false);
-    this.skipButton.setDepth(102);
+    this.skipButton.setDepth(501);
+    this.skipButton.setScrollFactor(0);
     this.addUIElement(this.skipButton);
     
     // Tower card storage area
@@ -916,13 +938,15 @@ export class BattleScene extends Phaser.Scene {
     this.scrollLeftBtn = new Button(this, arrowWidth / 2 + 3, storageY, '◀', () => {
       this.scrollCards(-1);
     }, { width: arrowWidth * 1.8, height: 100, color: 0x1b263b, fontSize: '28px', borderRadius: 6 });
-    this.scrollLeftBtn.setDepth(103);
+    this.scrollLeftBtn.setDepth(501);
+    this.scrollLeftBtn.setScrollFactor(0);
     this.addUIElement(this.scrollLeftBtn);
     
     this.scrollRightBtn = new Button(this, width - arrowWidth / 2 - 3, storageY, '▶', () => {
       this.scrollCards(1);
     }, { width: arrowWidth * 1.8, height: 100, color: 0x1b263b, fontSize: '28px', borderRadius: 6 });
-    this.scrollRightBtn.setDepth(103);
+    this.scrollRightBtn.setDepth(501);
+    this.scrollRightBtn.setScrollFactor(0);
     this.addUIElement(this.scrollRightBtn);
     
     // Card slots with sleek design
@@ -938,7 +962,8 @@ export class BattleScene extends Phaser.Scene {
       
       const slot = this.add.rectangle(slotX, storageY, slotWidth, 100, 0x0d1b2a, 0.95);
       slot.setStrokeStyle(2, 0x00d4ff, 0.4);
-      slot.setDepth(101);
+      slot.setDepth(501);
+      slot.setScrollFactor(0);
       slot.setInteractive({ useHandCursor: true });
       slot.slotIndex = i;
       this.addUIElement(slot);
@@ -1003,7 +1028,10 @@ export class BattleScene extends Phaser.Scene {
     // Disable tower interactions
     this.setTowerInteractivity(false);
     
-    this.showMessage(`Selected: ${this.towerCards[actualIndex].name} - Tap arena to place`, this.towerCards[actualIndex].color);
+    const card = this.towerCards[actualIndex];
+    const rarityKey = card.rarity ? card.rarity.toUpperCase() : 'COMMON';
+    const rarityColor = GameConfig.RARITY[rarityKey]?.color || 0x9e9e9e;
+    this.showMessage(`Selected: ${card.name} - Tap arena to place`, rarityColor);
   }
 
   deselectCard() {
@@ -1117,16 +1145,21 @@ export class BattleScene extends Phaser.Scene {
       const slotX = this.slotStartX + i * this.slotSpacing;
       
       const visual = this.add.container(slotX, this.storageY);
-      visual.setDepth(102);
+      visual.setDepth(502);
+      visual.setScrollFactor(0);
       this.addUIElement(visual); // UI element - main camera ignores
       
+      // Get rarity color from GameConfig
+      const rarityKey = card.rarity ? card.rarity.toUpperCase() : 'COMMON';
+      const rarityColor = GameConfig.RARITY[rarityKey]?.color || 0x9e9e9e;
+      
       // Card visual (rarity-colored background, 94x94 to fit 100x100 slot)
-      const bg = this.add.rectangle(0, 0, 94, 94, card.color, 0.95);
+      const bg = this.add.rectangle(0, 0, 94, 94, rarityColor, 0.95);
       bg.setStrokeStyle(2, 0xffffff, 0.8);
       visual.add(bg);
       
       // Inner glow effect
-      const innerGlow = this.add.rectangle(0, 0, 88, 88, card.color, 0.3);
+      const innerGlow = this.add.rectangle(0, 0, 88, 88, rarityColor, 0.3);
       visual.add(innerGlow);
       
       // Tower icon (small tower shape)
@@ -1369,13 +1402,13 @@ export class BattleScene extends Phaser.Scene {
       this.towerInfoPanel.add(specialText);
     }
     
-    // Button row
-    const buttonY = 150; // Moved up to prevent overflow
+    // Button row (moved higher to fit in panel)
+    const buttonY = 120;
     
     // Upgrade button (new) - moved left
     const upgradeBtn = new Button(this, -230, buttonY, '⬆ Upgrade', () => {
       this.showUpgradePanel(tower);
-    }, { width: 220, height: 100, color: 0x4caf50, fontSize: '32px' });
+    }, { width: 200, height: 90, color: 0x4caf50, fontSize: '28px' });
     upgradeBtn.setDepth(91);
     this.towerInfoPanel.add(upgradeBtn);
     
@@ -1421,48 +1454,83 @@ export class BattleScene extends Phaser.Scene {
     // Convert enemy world position to screen position
     const screen = this.worldToScreen(enemy.worldX, enemy.worldY);
     
-    // Create info tooltip
-    this.enemyInfoTooltip = this.add.container(screen.x, screen.y - 60);
+    // Tooltip dimensions
+    const tooltipWidth = 360;
+    const tooltipHeight = 200;
+    const defaultOffsetY = -120;
+    
+    // Calculate initial position
+    let tooltipX = screen.x;
+    let tooltipY = screen.y + defaultOffsetY;
+    
+    // Adjust for screen boundaries
+    const margin = 10;
+    const { width, height } = this.scale;
+    
+    // Check horizontal bounds
+    if (tooltipX - tooltipWidth / 2 < margin) {
+      tooltipX = tooltipWidth / 2 + margin;
+    } else if (tooltipX + tooltipWidth / 2 > width - margin) {
+      tooltipX = width - tooltipWidth / 2 - margin;
+    }
+    
+    // Check vertical bounds (including UI areas)
+    const topUIHeight = 180; // Top UI panel height
+    const bottomUIHeight = 200; // Bottom UI panel height
+    
+    if (tooltipY - tooltipHeight / 2 < topUIHeight) {
+      // Too close to top, move below enemy
+      tooltipY = screen.y + 120;
+    }
+    
+    if (tooltipY + tooltipHeight / 2 > height - bottomUIHeight) {
+      // Too close to bottom UI, move above
+      tooltipY = height - bottomUIHeight - tooltipHeight / 2 - margin;
+    }
+    
+    // Create info tooltip (2x larger)
+    this.enemyInfoTooltip = this.add.container(tooltipX, tooltipY);
     this.enemyInfoTooltip.setDepth(1000);
+    this.enemyInfoTooltip.setScrollFactor(0); // Fixed to camera
     this.addUIElement(this.enemyInfoTooltip);
     
-    // Background
-    const bg = this.add.rectangle(0, 0, 180, 100, 0x1a1a2e, 0.95);
-    bg.setStrokeStyle(3, enemy.bodyColor || 0xf44336);
+    // Background (2x size)
+    const bg = this.add.rectangle(0, 0, 360, 200, 0x1a1a2e, 0.95);
+    bg.setStrokeStyle(6, enemy.bodyColor || 0xf44336);
     this.enemyInfoTooltip.add(bg);
     
-    // Enemy name
+    // Enemy name (2x font)
     const typeName = enemy.enemyType.charAt(0).toUpperCase() + enemy.enemyType.slice(1);
-    const nameText = this.add.text(0, -35, typeName, {
+    const nameText = this.add.text(0, -70, typeName, {
       fontFamily: 'Arial Black',
-      fontSize: '18px',
+      fontSize: '36px',
       color: '#ffffff',
       align: 'center'
     }).setOrigin(0.5);
     this.enemyInfoTooltip.add(nameText);
     
-    // HP info
-    const hpText = this.add.text(0, -10, `HP: ${Math.ceil(enemy.health)} / ${enemy.maxHealth}`, {
+    // HP info (2x font)
+    const hpText = this.add.text(0, -20, `HP: ${Math.ceil(enemy.health)} / ${enemy.maxHealth}`, {
       fontFamily: 'Arial',
-      fontSize: '16px',
+      fontSize: '32px',
       color: '#4caf50',
       align: 'center'
     }).setOrigin(0.5);
     this.enemyInfoTooltip.add(hpText);
     
-    // Speed info
-    const speedText = this.add.text(0, 10, `Speed: ${enemy.speed.toFixed(1)}`, {
+    // Speed info (2x font)
+    const speedText = this.add.text(0, 20, `Speed: ${enemy.speed.toFixed(1)}`, {
       fontFamily: 'Arial',
-      fontSize: '14px',
+      fontSize: '28px',
       color: '#00bcd4',
       align: 'center'
     }).setOrigin(0.5);
     this.enemyInfoTooltip.add(speedText);
     
-    // Gold reward
-    const goldText = this.add.text(0, 30, `💰 ${enemy.goldValue}g`, {
+    // Gold reward (2x font)
+    const goldText = this.add.text(0, 60, `💰 ${enemy.goldValue}g`, {
       fontFamily: 'Arial',
-      fontSize: '14px',
+      fontSize: '28px',
       color: '#ffd700',
       align: 'center'
     }).setOrigin(0.5);
@@ -1537,7 +1605,7 @@ export class BattleScene extends Phaser.Scene {
     
     // Explanation
     const explainText = this.add.text(0, -30, 
-      'Collect 5 identical towers (map + cards)\\nto merge them into one random tower\\nof the next rarity tier!', {
+      'Collect 5 identical towers (map + cards)\nto merge them into one random tower\nof the next rarity tier!', {
       fontFamily: 'Arial',
       fontSize: '16px',
       color: '#aaaaaa',
@@ -1547,7 +1615,7 @@ export class BattleScene extends Phaser.Scene {
     
     // Upgrade/Merge button
     if (canUpgrade) {
-      const upgradeBtn = new Button(this, 0, 50, '✨ MERGE UPGRADE ✨\\n(5 Cards → 1 Higher Tier)', () => {
+      const upgradeBtn = new Button(this, 0, 50, '✨ MERGE UPGRADE ✨\n(5 Cards → 1 Higher Tier)', () => {
         this.performMergeUpgrade(tower);
       }, { width: 360, height: 80, color: 0x4caf50, fontSize: '18px' });
       upgradeBtn.setDepth(301);
@@ -1578,6 +1646,7 @@ export class BattleScene extends Phaser.Scene {
     // Find and remove 5 matching items (from both map and storage)
     const targetId = tower.cardData.id;
     let removed = 0;
+    const removedTowerPositions = []; // Track positions to free up
     
     // First, remove from stored cards
     for (let i = this.towerCards.length - 1; i >= 0 && removed < 5; i--) {
@@ -1587,14 +1656,18 @@ export class BattleScene extends Phaser.Scene {
       }
     }
     
-    // Then, remove from map towers if still need more
+    // Then, remove from map towers if still need more (excluding the selected tower)
     for (let i = this.towers.length - 1; i >= 0 && removed < 5; i--) {
       if (this.towers[i].cardData && this.towers[i].cardData.id === targetId) {
         // Don't remove the selected tower being upgraded
         if (this.towers[i] === tower) continue;
         
+        // Store position to free up the tile
+        const removedTower = this.towers[i];
+        removedTowerPositions.push({ x: removedTower.worldX, y: removedTower.worldY });
+        
         // Remove tower from map
-        this.towers[i].destroy();
+        removedTower.destroy();
         this.towers.splice(i, 1);
         removed++;
       }
@@ -1605,16 +1678,22 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     
+    // Free up tiles that were occupied by removed towers
+    if (this.occupiedTiles) {
+      removedTowerPositions.forEach(pos => {
+        const tileKey = `${pos.x},${pos.y}`;
+        this.occupiedTiles.delete(tileKey);
+      });
+    }
+    
+    // Get next tier rarity
+    
     // Get next tier rarity
     const currentRarity = tower.cardData.rarity;
     const nextRarity = this.getNextRarity(currentRarity);
     
     if (!nextRarity) {
       this.showMessage('Already max rarity!', 0xffd700);
-      // Refund cards
-      for (let i = 0; i < 5; i++) {
-        this.towerCards.push({ ...tower.cardData });
-      }
       return;
     }
     
@@ -1622,9 +1701,36 @@ export class BattleScene extends Phaser.Scene {
     const nextTierCard = this.getRandomCardByRarity(nextRarity);
     
     if (nextTierCard) {
-      this.towerCards.push(nextTierCard);
+      // Transform tower in place (update its card data)
+      const oldWorldX = tower.worldX;
+      const oldWorldY = tower.worldY;
+      
+      // Remove old tower
+      const towerIndex = this.towers.indexOf(tower);
+      if (towerIndex > -1) {
+        this.towers.splice(towerIndex, 1);
+      }
+      tower.destroy();
+      
+      // Create new upgraded tower at same position
+      const newTower = new Tower(this, 0, 0, nextTierCard);
+      newTower.worldX = oldWorldX;
+      newTower.worldY = oldWorldY;
+      this.addGameElement(newTower);
+      this.towers.push(newTower);
+      this.setTowerInteractivity(newTower);
+      
+      // Upgrade effect
+      this.tweens.add({
+        targets: newTower,
+        scale: 1.5,
+        duration: 300,
+        yoyo: true,
+        ease: 'Bounce.easeOut'
+      });
+      
       this.updateCardDisplay();
-      this.showMessage(`Merged! Got ${nextTierCard.name} (${nextRarity})!`, 0x4caf50);
+      this.showMessage(`Upgraded to ${nextTierCard.name} (${nextRarity})!`, 0x4caf50);
       this.hideUpgradePanel();
     } else {
       this.showMessage('Upgrade failed!', 0xff4444);
@@ -2032,29 +2138,51 @@ export class BattleScene extends Phaser.Scene {
     this.timerText.setText(`${this.battleState.waveTimer}s`);
     this.timerText.setColor('#4a9eff');
     
-    // Wave start effect
+    // Enhanced wave start effect
     const { width, height } = this.cameras.main;
+    
+    // Flash effect
+    this.cameras.main.flash(500, 100, 200, 255, false);
+    
+    // Screen shake
+    this.cameras.main.shake(400, 0.02);
+    
+    // Main wave text with glow
     const waveText = this.add.text(width / 2, height / 2 - 50, `WAVE ${this.battleState.currentWave}`, {
       fontFamily: 'Arial Black',
-      fontSize: '48px',
+      fontSize: '72px',
       color: '#ffffff',
-      stroke: '#000000',
-      strokeThickness: 6
-    }).setOrigin(0.5).setDepth(200);
+      stroke: '#00d4ff',
+      strokeThickness: 8
+    }).setOrigin(0.5).setDepth(300).setScale(0);
     
     // Boss wave announcement
     const isBossWave = this.battleState.currentWave % 10 === 0;
     if (isBossWave) {
       waveText.setText(`⚠ BOSS WAVE ${this.battleState.currentWave} ⚠`);
       waveText.setColor('#ff4444');
-      this.cameras.main.shake(300, 0.015);
+      waveText.setStroke('#ff0000', 10);
+      this.cameras.main.shake(600, 0.03);
+      this.cameras.main.flash(800, 255, 0, 0, false);
     }
     
+    // Dramatic zoom-in animation
+    this.tweens.add({
+      targets: waveText,
+      scale: 1.2,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
+    
+    // Fade out and move up
     this.tweens.add({
       targets: waveText,
       alpha: 0,
-      y: waveText.y - 80,
-      duration: 1000,
+      y: waveText.y - 120,
+      scale: 0.8,
+      duration: 1500,
+      delay: 800,
+      ease: 'Cubic.easeIn',
       onComplete: () => waveText.destroy()
     });
     

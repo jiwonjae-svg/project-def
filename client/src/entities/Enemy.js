@@ -13,6 +13,11 @@ export class Enemy extends Phaser.GameObjects.Container {
     this.pathPoints = pathPoints;
     this.enemyData = enemyData;
     
+    // Important: worldX/worldY = actual world coordinates for movement
+    // x/y = screen coordinates for display (affected by virtual zoom)
+    this.worldX = pathPoints[0].x;
+    this.worldY = pathPoints[0].y;
+    
     // Stats
     this.maxHealth = enemyData.health;
     this.health = enemyData.health;
@@ -86,14 +91,28 @@ export class Enemy extends Phaser.GameObjects.Container {
     // Special features based on type
     this.addTypeFeatures();
     
-    // Health bar background
-    this.healthBarBg = this.scene.add.rectangle(0, -this.bodySize - 10, 30, 5, 0x333333);
-    this.add(this.healthBarBg);
+    // Health bar system - independent from container rotation
+    // Create health bars in scene (not in container) to avoid rotation effects
+    const healthBarOffset = -this.bodySize - 10; // Y offset from center
     
-    // Health bar fill
-    this.healthBar = this.scene.add.rectangle(-15, -this.bodySize - 10, 30, 4, 0x4caf50);
+    // Calculate initial health bar position (convert world to screen if possible)
+    let healthBarX = this.worldX;
+    let healthBarY = this.worldY + healthBarOffset;
+    
+    if (this.scene.worldToScreen) {
+      const screenPos = this.scene.worldToScreen(this.worldX, this.worldY + healthBarOffset);
+      healthBarX = screenPos.x;
+      healthBarY = screenPos.y;
+    }
+    
+    // Health bar background (added to scene, not container)
+    this.healthBarBg = this.scene.add.rectangle(healthBarX, healthBarY, 30, 5, 0x333333);
+    this.healthBarBg.setDepth(16); // Just above enemy
+    
+    // Health bar fill (added to scene, not container)
+    this.healthBar = this.scene.add.rectangle(healthBarX - 15, healthBarY, 30, 4, 0x4caf50);
     this.healthBar.setOrigin(0, 0.5);
-    this.add(this.healthBar);
+    this.healthBar.setDepth(16);
     
     // Status effect icons container
     this.statusContainer = this.scene.add.container(0, -this.bodySize - 20);
@@ -233,6 +252,9 @@ export class Enemy extends Phaser.GameObjects.Container {
     // Update facing direction
     this.updateFacing();
     
+    // Update health bar position (independent of rotation)
+    this.updateHealthBarPosition();
+    
     // Animate (check if components still exist)
     if (this.body && !this.isDead) {
       this.animate(time);
@@ -264,6 +286,8 @@ export class Enemy extends Phaser.GameObjects.Container {
       // Reached waypoint
       this.x = target.x;
       this.y = target.y;
+      this.worldX = target.x;
+      this.worldY = target.y;
       this.currentPathIndex++;
       this.pathProgress = this.currentPathIndex / (this.pathPoints.length - 1);
     } else {
@@ -271,6 +295,8 @@ export class Enemy extends Phaser.GameObjects.Container {
       const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
       this.x += Math.cos(angle) * moveDistance;
       this.y += Math.sin(angle) * moveDistance;
+      this.worldX = this.x;
+      this.worldY = this.y;
       
       // Calculate progress within segment
       const segmentProgress = 1 - (distance / Phaser.Math.Distance.Between(
@@ -285,9 +311,7 @@ export class Enemy extends Phaser.GameObjects.Container {
   }
 
   updateFacing() {
-    // Safety check
-    if (!this.healthBar || !this.healthBarBg) return;
-    
+    // Rotate enemy to face movement direction
     if (this.currentPathIndex < this.pathPoints.length - 1) {
       const target = this.pathPoints[this.currentPathIndex + 1];
       
@@ -296,26 +320,37 @@ export class Enemy extends Phaser.GameObjects.Container {
       
       // Rotate container to face movement direction
       this.rotation = angle + Math.PI / 2;
+    }
+  }
+
+  updateHealthBarPosition() {
+    // Update health bar position - always above enemy, rotation-independent
+    if (!this.healthBar || !this.healthBarBg || !this.scene) return;
+    
+    // Health bar offset in world coordinates
+    const healthBarOffset = -this.bodySize - 10;
+    
+    // Calculate health bar world position
+    const healthBarWorldX = this.worldX;
+    const healthBarWorldY = this.worldY + healthBarOffset;
+    
+    // Convert to screen coordinates using scene's worldToScreen
+    if (this.scene.worldToScreen) {
+      const screenPos = this.scene.worldToScreen(healthBarWorldX, healthBarWorldY);
       
-      // Keep health bar always above the enemy (world-space Y = up)
-      // Counter-rotate AND reposition to stay above enemy regardless of rotation
-      const healthBarOffset = this.bodySize + 10;
+      // Position health bars at screen coordinates
+      this.healthBarBg.x = screenPos.x;
+      this.healthBarBg.y = screenPos.y;
       
-      // Calculate position that keeps bar above enemy in world space
-      // When container rotates, we need to offset the bar position to compensate
-      const offsetX = Math.sin(this.rotation) * healthBarOffset;
-      const offsetY = -Math.cos(this.rotation) * healthBarOffset;
+      this.healthBar.x = screenPos.x - 15; // Offset for left-aligned bar
+      this.healthBar.y = screenPos.y;
+    } else {
+      // Fallback if worldToScreen not available
+      this.healthBarBg.x = healthBarWorldX;
+      this.healthBarBg.y = healthBarWorldY;
       
-      if (this.healthBar) {
-        this.healthBar.rotation = -this.rotation;
-        this.healthBar.x = offsetX - 15 * Math.cos(this.rotation);
-        this.healthBar.y = offsetY - 15 * Math.sin(this.rotation);
-      }
-      if (this.healthBarBg) {
-        this.healthBarBg.rotation = -this.rotation;
-        this.healthBarBg.x = offsetX;
-        this.healthBarBg.y = offsetY;
-      }
+      this.healthBar.x = healthBarWorldX - 15;
+      this.healthBar.y = healthBarWorldY;
     }
   }
 
