@@ -55,17 +55,127 @@ class SaveManager {
       savedAt: Date.now()
     });
 
-    // Try cloud save if online
+    // Try cloud save if online (server validates the state)
     if (this.isOnline) {
       try {
-        await apiService.saveGame(gameState);
-        console.log('Cloud save successful');
+        const response = await apiService.saveGame(gameState);
+        if (response.validated) {
+          console.log('Cloud save successful and validated');
+        } else {
+          console.warn('Cloud save succeeded but validation skipped');
+        }
       } catch (error) {
-        console.warn('Cloud save failed, local save preserved');
+        console.warn('Cloud save failed, local save preserved:', error.message);
       }
     }
 
     return localSuccess;
+  }
+
+  /**
+   * Request server-validated gold reward
+   */
+  async requestGoldReward(eventType, baseReward, playerLevel, enemiesKilled) {
+    if (!this.isOnline) {
+      // Offline mode - use client-side calculation with limited validation
+      return {
+        success: true,
+        offline: true,
+        reward: {
+          base: baseReward,
+          bonus: 0,
+          total: baseReward
+        }
+      };
+    }
+
+    try {
+      const response = await apiService.post('/api/reward/gold', {
+        userId: this.getCurrentUserId(),
+        eventType,
+        baseReward,
+        playerLevel,
+        enemiesKilled
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Failed to validate gold reward:', error);
+      // Fallback to offline mode
+      return {
+        success: true,
+        offline: true,
+        reward: {
+          base: baseReward,
+          bonus: 0,
+          total: baseReward
+        }
+      };
+    }
+  }
+
+  /**
+   * Request server-validated card reward rarity
+   */
+  async requestCardReward(isElite, stageNumber) {
+    if (!this.isOnline) {
+      // Offline mode - client determines rarity
+      return {
+        success: true,
+        offline: true,
+        rarity: this.getClientSideRarity(isElite)
+      };
+    }
+
+    try {
+      const response = await apiService.post('/api/reward/card', {
+        userId: this.getCurrentUserId(),
+        isElite,
+        stageNumber
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Failed to validate card reward:', error);
+      // Fallback to client-side
+      return {
+        success: true,
+        offline: true,
+        rarity: this.getClientSideRarity(isElite)
+      };
+    }
+  }
+
+  /**
+   * Client-side rarity determination (fallback only)
+   */
+  getClientSideRarity(isElite) {
+    const roll = Math.random() * 100;
+    
+    if (isElite) {
+      if (roll < 20) return 'common';
+      if (roll < 45) return 'uncommon';
+      if (roll < 70) return 'rare';
+      if (roll < 90) return 'epic';
+      return 'legendary';
+    } else {
+      if (roll < 50) return 'common';
+      if (roll < 75) return 'uncommon';
+      if (roll < 90) return 'rare';
+      if (roll < 98) return 'epic';
+      return 'legendary';
+    }
+  }
+
+  /**
+   * Get current user ID (should be set during authentication)
+   */
+  getCurrentUserId() {
+    return localStorage.getItem('userId') || 'anonymous';
+  }
+
+  setCurrentUserId(userId) {
+    localStorage.setItem('userId', userId);
   }
 
   async loadGameState() {

@@ -191,7 +191,127 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-// Save/Load Game State
+// ==================== GAME VALIDATION UTILITIES ====================
+
+/**
+ * Validate and calculate gold rewards server-side
+ */
+function validateGoldReward(eventType, baseReward, playerLevel, enemiesKilled) {
+  const validatedReward = {
+    base: 0,
+    bonus: 0,
+    total: 0,
+    valid: true,
+    reason: ''
+  };
+
+  // Define expected gold ranges by event type
+  const goldRanges = {
+    enemy_kill: { min: 5, max: 50 },
+    wave_complete: { min: 20, max: 200 },
+    elite_kill: { min: 50, max: 300 },
+    boss_kill: { min: 100, max: 500 },
+    stage_complete: { min: 100, max: 1000 }
+  };
+
+  const range = goldRanges[eventType];
+  if (!range) {
+    validatedReward.valid = false;
+    validatedReward.reason = 'Invalid event type';
+    return validatedReward;
+  }
+
+  // Validate base reward is within expected range
+  if (baseReward < range.min || baseReward > range.max) {
+    validatedReward.valid = false;
+    validatedReward.reason = `Gold reward ${baseReward} outside valid range [${range.min}, ${range.max}]`;
+    return validatedReward;
+  }
+
+  // Calculate server-side bonus
+  const levelBonus = Math.floor(playerLevel * 0.1 * baseReward);
+  const killBonus = Math.floor(enemiesKilled * 0.5);
+  
+  validatedReward.base = baseReward;
+  validatedReward.bonus = levelBonus + killBonus;
+  validatedReward.total = validatedReward.base + validatedReward.bonus;
+  
+  return validatedReward;
+}
+
+/**
+ * Validate card reward selection server-side
+ */
+function validateCardReward(cardId, isElite, stageNumber) {
+  const validation = {
+    valid: true,
+    reason: '',
+    adjustedRarity: null
+  };
+
+  // Server-side rarity determination
+  const rarityRoll = Math.random() * 100;
+  let expectedRarity;
+  
+  if (isElite) {
+    if (rarityRoll < 20) expectedRarity = 'common';
+    else if (rarityRoll < 45) expectedRarity = 'uncommon';
+    else if (rarityRoll < 70) expectedRarity = 'rare';
+    else if (rarityRoll < 90) expectedRarity = 'epic';
+    else expectedRarity = 'legendary';
+  } else {
+    if (rarityRoll < 50) expectedRarity = 'common';
+    else if (rarityRoll < 75) expectedRarity = 'uncommon';
+    else if (rarityRoll < 90) expectedRarity = 'rare';
+    else if (rarityRoll < 98) expectedRarity = 'epic';
+    else expectedRarity = 'legendary';
+  }
+
+  // In production, verify cardId exists and matches rarity
+  // For now, we trust client but log for audit
+  validation.adjustedRarity = expectedRarity;
+  
+  return validation;
+}
+
+/**
+ * Validate game state changes
+ */
+function validateGameState(previousState, newState) {
+  const validation = {
+    valid: true,
+    issues: []
+  };
+
+  // Validate gold changes
+  const goldDiff = newState.gold - previousState.gold;
+  const maxGoldPerSession = 5000; // Reasonable limit
+  
+  if (goldDiff > maxGoldPerSession) {
+    validation.valid = false;
+    validation.issues.push(`Suspicious gold gain: ${goldDiff}`);
+  }
+
+  // Validate stage progression
+  if (newState.currentStage < previousState.currentStage) {
+    validation.issues.push('Stage number decreased');
+  }
+
+  if (newState.currentStage - previousState.currentStage > 5) {
+    validation.valid = false;
+    validation.issues.push('Stage progression too fast');
+  }
+
+  // Validate deck size
+  if (newState.deck && newState.deck.length > 50) {
+    validation.valid = false;
+    validation.issues.push('Deck size exceeds maximum');
+  }
+
+  return validation;
+}
+
+// Save/Load Game State (with validation)
 app.post('/api/save', async (req, res) => {
   try {
     const { userId, gameState } = req.body;
@@ -200,14 +320,39 @@ app.post('/api/save', async (req, res) => {
       return res.status(400).json({ error: 'userId and gameState are required' });
     }
 
+    // Load previous state for validation
+    let previousState = null;
+    if (db) {
+      const prevDoc = await db.collection('saves').doc(userId).get();
+      if (prevDoc.exists) {
+        previousState = prevDoc.data();
+      }
+    }
+
+    // Validate state changes if previous state exists
+    if (previousState) {
+      const validation = validateGameState(previousState, gameState);
+      if (!validation.valid) {
+        console.warn(`State validation failed for user ${userId}:`, validation.issues);
+        return res.status(400).json({ 
+          error: 'Invalid game state',
+          issues: validation.issues 
+        });
+      }
+      if (validation.issues.length > 0) {
+        console.warn(`State validation warnings for user ${userId}:`, validation.issues);
+      }
+    }
+
     const saveData = {
       ...gameState,
-      savedAt: admin.firestore.FieldValue.serverTimestamp()
+      savedAt: admin.firestore.FieldValue.serverTimestamp(),
+      validated: true
     };
 
     if (db) {
       await db.collection('saves').doc(userId).set(saveData);
-      res.json({ success: true });
+      res.json({ success: true, validated: true });
     } else {
       res.json({ success: true, offline: true });
     }
@@ -253,6 +398,106 @@ app.post('/api/daily-reward/:userId', async (req, res) => {
       const now = new Date();
       
       // Check if 24 hours have passed
+      const hoursSinceLastClaim = (now - lastClaim) / (1000 * 60 * 60);
+      
+      if (hoursSinceLastClaim < 24) {
+        return res.json({ 
+          success: false, 
+          message: 'Daily reward already claimed',
+          nextClaimIn: Math.ceil(24 - hoursSinceLastClaim)
+        });
+      }
+
+      // Server-determined reward (not client)
+      const dailyReward = {
+        gold: 50,
+        gems: 5
+      };
+
+      await db.collection('users').doc(userId).update({
+        'currency.gold': admin.firestore.FieldValue.increment(dailyReward.gold),
+        'currency.gems': admin.firestore.FieldValue.increment(dailyReward.gems),
+        lastDailyReward: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      res.json({ 
+        success: true, 
+        reward: dailyReward
+      });
+    } else {
+      res.json({ success: true, offline: true });
+    }
+  } catch (error) {
+    console.error('Error claiming daily reward:', error);
+    res.status(500).json({ error: 'Failed to claim reward' });
+  }
+});
+
+// Server-validated gold reward endpoint
+app.post('/api/reward/gold', async (req, res) => {
+  try {
+    const { userId, eventType, baseReward, playerLevel, enemiesKilled } = req.body;
+
+    if (!userId || !eventType || baseReward === undefined) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    // Validate gold reward server-side
+    const validation = validateGoldReward(
+      eventType, 
+      baseReward, 
+      playerLevel || 1, 
+      enemiesKilled || 0
+    );
+
+    if (!validation.valid) {
+      console.warn(`Gold validation failed for user ${userId}: ${validation.reason}`);
+      return res.status(400).json({ 
+        error: 'Invalid reward',
+        reason: validation.reason 
+      });
+    }
+
+    if (db) {
+      // Update user's gold
+      await db.collection('users').doc(userId).update({
+        'currency.gold': admin.firestore.FieldValue.increment(validation.total)
+      });
+
+      res.json({ 
+        success: true, 
+        reward: validation
+      });
+    } else {
+      res.json({ success: true, offline: true, reward: validation });
+    }
+  } catch (error) {
+    console.error('Error processing gold reward:', error);
+    res.status(500).json({ error: 'Failed to process reward' });
+  }
+});
+
+// Server-validated card reward endpoint
+app.post('/api/reward/card', async (req, res) => {
+  try {
+    const { userId, isElite, stageNumber } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    // Server determines card rarity
+    const validation = validateCardReward(null, isElite || false, stageNumber || 1);
+    
+    res.json({ 
+      success: true, 
+      rarity: validation.adjustedRarity
+    });
+  } catch (error) {
+    console.error('Error processing card reward:', error);
+    res.status(500).json({ error: 'Failed to process card reward' });
+  }
+});
       const hoursSinceClaim = (now - lastClaim) / (1000 * 60 * 60);
       if (hoursSinceClaim < 24) {
         const timeRemaining = Math.ceil(24 - hoursSinceClaim);

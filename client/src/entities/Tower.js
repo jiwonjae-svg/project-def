@@ -603,6 +603,55 @@ class Projectile extends Phaser.GameObjects.Container {
       });
     }
   }
+
+  /**
+   * Reset projectile for object pooling
+   */
+  reset(x, y, worldX, worldY, target, config) {
+    this.x = x;
+    this.y = y;
+    this.worldX = worldX !== undefined ? worldX : x;
+    this.worldY = worldY !== undefined ? worldY : y;
+
+    this.target = target;
+    this.damage = config.damage;
+    this.speed = config.speed;
+    this.projectileType = config.type;
+    this.shouldDestroy = false;
+
+    // Reset visual state
+    this.setAlpha(1);
+    this.setScale(1);
+    this.rotation = 0;
+
+    // Recalculate initial rotation towards target
+    if (target) {
+      const targetWorldX = target.worldX !== undefined ? target.worldX : target.x;
+      const targetWorldY = target.worldY !== undefined ? target.worldY : target.y;
+      const angle = Phaser.Math.Angle.Between(this.worldX, this.worldY, targetWorldX, targetWorldY);
+      this.rotation = angle + Math.PI / 2;
+    }
+  }
+
+  /**
+   * Cleanup before returning to pool
+   */
+  cleanup() {
+    // Stop tweens
+    this.scene.tweens.killTweensOf(this);
+
+    // Clear target reference
+    this.target = null;
+    this.shouldDestroy = false;
+
+    // Clear trail
+    if (this.trail && this.trail.length > 0) {
+      this.trail.forEach(t => {
+        if (t && t.destroy) t.destroy();
+      });
+      this.trail = [];
+    }
+  }
   
   destroy(fromScene) {
     // Mark as destroyed
@@ -613,3 +662,4 @@ class Projectile extends Phaser.GameObjects.Container {
 }
 
 export { Projectile };
+

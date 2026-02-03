@@ -20,13 +20,22 @@ export class PreloadScene extends Phaser.Scene {
     this.loadAudio();
     this.loadFonts();
 
-    // Loading progress events
+    // Loading progress events - using Phaser's built-in loader events
     this.load.on('progress', (value) => {
       this.updateProgress(value);
     });
 
+    this.load.on('fileprogress', (file) => {
+      this.updateFileProgress(file);
+    });
+
     this.load.on('complete', () => {
       this.loadComplete();
+    });
+
+    this.load.on('loaderror', (file) => {
+      console.error('Error loading file:', file.key, file.url);
+      this.handleLoadError(file);
     });
   }
 
@@ -77,6 +86,13 @@ export class PreloadScene extends Phaser.Scene {
       color: '#aaaaaa'
     }).setOrigin(0.5);
 
+    // File name text (shows current file being loaded)
+    this.fileText = this.add.text(width / 2, height * 0.67, '', {
+      fontFamily: 'Arial',
+      fontSize: '14px',
+      color: '#666666'
+    }).setOrigin(0.5);
+
     // Subtitle
     this.add.text(width / 2, height * 0.45, 'Roguelike Tower Defense', {
       fontFamily: 'Arial',
@@ -84,6 +100,41 @@ export class PreloadScene extends Phaser.Scene {
       color: '#ffffff',
       alpha: 0.7
     }).setOrigin(0.5);
+
+    // Loading spinner animation
+    this.createLoadingSpinner(width / 2, height * 0.75);
+  }
+
+  createLoadingSpinner(x, y) {
+    // Simple rotating circles for loading indicator
+    this.spinnerCircles = [];
+    const circleCount = 8;
+    const radius = 30;
+
+    for (let i = 0; i < circleCount; i++) {
+      const angle = (i / circleCount) * Math.PI * 2;
+      const circleX = x + Math.cos(angle) * radius;
+      const circleY = y + Math.sin(angle) * radius;
+      
+      const circle = this.add.circle(circleX, circleY, 4, 0xe94560);
+      circle.setAlpha(0.2 + (i / circleCount) * 0.8);
+      this.spinnerCircles.push(circle);
+    }
+
+    // Rotate spinner
+    this.spinnerAngle = 0;
+    this.time.addEvent({
+      delay: 50,
+      callback: () => {
+        this.spinnerAngle += Math.PI / 8;
+        this.spinnerCircles.forEach((circle, i) => {
+          const angle = (i / circleCount) * Math.PI * 2 + this.spinnerAngle;
+          circle.x = x + Math.cos(angle) * radius;
+          circle.y = y + Math.sin(angle) * radius;
+        });
+      },
+      loop: true
+    });
   }
 
   updateProgress(value) {
@@ -95,25 +146,66 @@ export class PreloadScene extends Phaser.Scene {
     const percent = Math.floor(value * 100);
     this.loadingText.setText(`Loading assets... ${percent}%`);
 
-    // Update HTML loading screen if present
-    if (window.updateLoadingProgress) {
-      window.updateLoadingProgress(10 + percent * 0.8, `Loading assets... ${percent}%`);
-    }
+    // Add color transition as progress increases
+    const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+      Phaser.Display.Color.ValueToColor(0xe94560),
+      Phaser.Display.Color.ValueToColor(0x4caf50),
+      100,
+      percent
+    );
+    this.progressBar.setFillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b));
+  }
+
+  updateFileProgress(file) {
+    // Show which file is currently being loaded
+    const fileName = file.key || 'unknown';
+    const fileType = file.type || '';
+    this.fileText.setText(`Loading ${fileType}: ${fileName}`);
+  }
+
+  handleLoadError(file) {
+    // Show error in file text
+    this.fileText.setText(`Error loading: ${file.key}`);
+    this.fileText.setColor('#ff5252');
   }
 
   loadComplete() {
     this.loadingText.setText('Ready!');
+    this.loadingText.setColor('#4caf50');
     
-    if (window.updateLoadingProgress) {
-      window.updateLoadingProgress(95, 'Preparing game...');
+    // Stop spinner animation
+    if (this.spinnerCircles) {
+      this.spinnerCircles.forEach(circle => {
+        this.tweens.add({
+          targets: circle,
+          alpha: 0,
+          duration: 300
+        });
+      });
     }
 
+    // Add checkmark animation
+    const { width, height } = this.cameras.main;
+    const checkmark = this.add.text(width / 2 + 200, height * 0.55, '✓', {
+      fontFamily: 'Arial',
+      fontSize: '32px',
+      color: '#4caf50'
+    }).setOrigin(0.5).setAlpha(0);
+
+    this.tweens.add({
+      targets: checkmark,
+      alpha: 1,
+      scale: 1.5,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
+
     // Short delay before transitioning
-    this.time.delayedCall(500, () => {
-      if (window.hideLoadingScreen) {
-        window.hideLoadingScreen();
-      }
-      this.scene.start('MainMenuScene');
+    this.time.delayedCall(800, () => {
+      this.cameras.main.fadeOut(500);
+      this.time.delayedCall(500, () => {
+        this.scene.start('MainMenuScene');
+      });
     });
   }
 

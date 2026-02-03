@@ -549,4 +549,91 @@ export class Enemy extends Phaser.GameObjects.Container {
       onComplete: () => healText.destroy()
     });
   }
+
+  /**
+   * Reset enemy for object pooling
+   */
+  reset(pathPoints, enemyData) {
+    // Reset position
+    this.pathPoints = pathPoints;
+    this.worldX = pathPoints[0].x;
+    this.worldY = pathPoints[0].y;
+    this.x = pathPoints[0].x;
+    this.y = pathPoints[0].y;
+
+    // Reset stats
+    this.enemyData = enemyData;
+    this.maxHealth = enemyData.health;
+    this.health = enemyData.health;
+    this.speed = enemyData.speed;
+    this.damage = enemyData.damage;
+    this.goldValue = enemyData.goldValue;
+    this.scoreValue = enemyData.scoreValue;
+    this.enemyType = enemyData.type;
+
+    // Reset state
+    this.currentPathIndex = 0;
+    this.pathProgress = 0;
+    this.isDead = false;
+    this.statusEffects = {};
+
+    // Reset visual
+    this.setScale(1);
+    this.setAlpha(1);
+    this.setAngle(0);
+
+    // Reset health bar
+    if (this.healthBar) {
+      this.healthBar.scaleX = 1;
+      this.healthBar.setVisible(true);
+    }
+    if (this.healthBarBg) {
+      this.healthBarBg.setVisible(true);
+    }
+
+    // Clear status icons
+    if (this.statusContainer) {
+      this.statusContainer.removeAll(true);
+    }
+
+    // Re-enable body
+    if (this.body) {
+      this.body.setStrokeStyle(0);
+    }
+
+    // Entrance animation
+    this.setScale(0);
+    this.scene.tweens.add({
+      targets: this,
+      scale: 1,
+      duration: 300,
+      ease: 'Back.easeOut'
+    });
+  }
+
+  /**
+   * Cleanup before returning to pool
+   */
+  cleanup() {
+    // Stop all tweens on this enemy
+    this.scene.tweens.killTweensOf(this);
+
+    // Hide health bars
+    if (this.healthBar) {
+      this.healthBar.setVisible(false);
+    }
+    if (this.healthBarBg) {
+      this.healthBarBg.setVisible(false);
+    }
+
+    // Clear status container
+    if (this.statusContainer) {
+      this.statusContainer.removeAll(true);
+    }
+
+    // Reset callbacks to prevent memory leaks
+    this.onReachBase = null;
+    this.onDeath = null;
+  }
 }
+

@@ -51,3 +51,10 @@ firebase-debug.log
 *.apk
 *.ipa
 *.aab
+
+# Documentation (exclude README.md)
+*.md
+!README.md
+
+# Repomix output
+repomix-output.xml

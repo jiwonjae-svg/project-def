@@ -433,21 +433,19 @@ export const CardDatabase = {
         cost: 0,
         description: 'Double your current energy. Draw 3 cards.',
         resourceType: 'infinite'
-      }
-    ],
-
-    mythic: [
+      },
+      // Extended legendary cards (consolidated from mythic/exalted/celestial/transcendent/divine)
       {
         id: 'titan_fortress',
         name: 'Titan Fortress',
         type: 'tower',
-        rarity: 'Mythic',
-        cost: 8,
+        rarity: 'Legendary',
+        cost: 7,
         description: 'Colossal tower with devastating power.',
         towerType: 'cannon',
-        damage: 100,
+        damage: 80,
         range: 220,
-        attackSpeed: 2000,
+        attackSpeed: 1800,
         projectileSpeed: 500,
         special: 'splash'
       },
@@ -455,28 +453,25 @@ export const CardDatabase = {
         id: 'phoenix_spire',
         name: 'Phoenix Spire',
         type: 'tower',
-        rarity: 'Mythic',
-        cost: 7,
+        rarity: 'Legendary',
+        cost: 6,
         description: 'Burns everything. Damage over time stacks.',
         towerType: 'mage',
-        damage: 50,
+        damage: 40,
         range: 180,
         attackSpeed: 800,
         projectileSpeed: 600,
         special: 'burn_stack'
-      }
-    ],
-
-    exalted: [
+      },
       {
         id: 'celestial_arbiter',
         name: 'Celestial Arbiter',
         type: 'tower',
-        rarity: 'Exalted',
-        cost: 9,
+        rarity: 'Legendary',
+        cost: 8,
         description: 'Divine judgment rains from above.',
         towerType: 'mage',
-        damage: 150,
+        damage: 100,
         range: 250,
         attackSpeed: 1500,
         projectileSpeed: 700,
@@ -486,25 +481,22 @@ export const CardDatabase = {
         id: 'worldbreaker',
         name: 'Worldbreaker',
         type: 'spell',
-        rarity: 'Exalted',
-        cost: 8,
-        description: 'Deal 500 damage to all enemies.',
+        rarity: 'Legendary',
+        cost: 7,
+        description: 'Deal 300 damage to all enemies.',
         effect: 'damage_all',
-        value: 500
-      }
-    ],
-
-    celestial: [
+        value: 300
+      },
       {
         id: 'astral_nexus',
         name: 'Astral Nexus',
         type: 'tower',
-        rarity: 'Celestial',
-        cost: 10,
+        rarity: 'Legendary',
+        cost: 8,
         description: 'Channels cosmic energy. Multi-target beam.',
         towerType: 'lightning',
-        damage: 200,
-        range: 300,
+        damage: 120,
+        range: 280,
         attackSpeed: 1000,
         projectileSpeed: 800,
         special: 'cosmic_beam'
@@ -513,27 +505,24 @@ export const CardDatabase = {
         id: 'stellar_cascade',
         name: 'Stellar Cascade',
         type: 'spell',
-        rarity: 'Celestial',
-        cost: 10,
-        description: 'Deal 1000 damage to all enemies. Slow for 5 turns.',
+        rarity: 'Legendary',
+        cost: 8,
+        description: 'Deal 500 damage to all enemies. Slow for 3 turns.',
         effect: 'apocalypse',
-        value: 1000,
-        stunDuration: 5
-      }
-    ],
-
-    transcendent: [
+        value: 500,
+        stunDuration: 3
+      },
       {
         id: 'eternal_sentinel',
         name: 'Eternal Sentinel',
         type: 'tower',
-        rarity: 'Transcendent',
-        cost: 12,
-        description: 'Beyond mortal comprehension. Infinite targets.',
+        rarity: 'Legendary',
+        cost: 9,
+        description: 'Beyond mortal comprehension. Attacks all enemies.',
         towerType: 'mage',
-        damage: 300,
+        damage: 150,
         range: 350,
-        attackSpeed: 500,
+        attackSpeed: 700,
         projectileSpeed: 1000,
         special: 'reality_warp'
       },
@@ -541,39 +530,17 @@ export const CardDatabase = {
         id: 'void_collapse',
         name: 'Void Collapse',
         type: 'spell',
-        rarity: 'Transcendent',
-        cost: 12,
-        description: 'Instantly destroy all enemies below 50% HP.',
+        rarity: 'Legendary',
+        cost: 9,
+        description: 'Instantly destroy all enemies below 40% HP.',
         effect: 'execute_all',
-        threshold: 0.5
+        threshold: 0.4
       }
     ],
 
-    divine: [
-      {
-        id: 'omniscient_obelisk',
-        name: 'Omniscient Obelisk',
-        type: 'tower',
-        rarity: 'Divine',
-        cost: 15,
-        description: 'The pinnacle of power. Destroys all.',
-        towerType: 'cannon',
-        damage: 500,
-        range: 400,
-        attackSpeed: 300,
-        projectileSpeed: 1200,
-        special: 'omnipotent'
-      },
-      {
-        id: 'genesis',
-        name: 'Genesis',
-        type: 'spell',
-        rarity: 'Divine',
-        cost: 15,
-        description: 'Reset the battlefield. Restore all HP, destroy all enemies.',
-        effect: 'reality_reset'
-      }
-    ]
+    // Note: Old mythic/exalted/celestial/transcendent/divine tiers removed
+    // All consolidated into legendary (5-tier system: common/uncommon/rare/epic/legendary)
+    legendary_extended: []
   },
 
   /**
@@ -605,35 +572,26 @@ export const CardDatabase = {
 
   /**
    * Get random card reward based on rarity weights
+   * Redesigned with 5 tiers and balanced probabilities
    */
   getRandomCard(isElite = false) {
     const rarityRoll = Math.random() * 100;
     let rarity;
     
     if (isElite) {
-      // Elite rewards have better odds
-      if (rarityRoll < 25) rarity = 'common';
-      else if (rarityRoll < 55) rarity = 'uncommon';
-      else if (rarityRoll < 75) rarity = 'rare';
-      else if (rarityRoll < 90) rarity = 'epic';
-      else if (rarityRoll < 97) rarity = 'legendary';
-      else if (rarityRoll < 99) rarity = 'mythic';
-      else if (rarityRoll < 99.5) rarity = 'exalted';
-      else if (rarityRoll < 99.8) rarity = 'celestial';
-      else if (rarityRoll < 99.95) rarity = 'transcendent';
-      else rarity = 'divine';
+      // Elite rewards - Better odds for higher rarities
+      if (rarityRoll < 20) rarity = 'common';          // 20%
+      else if (rarityRoll < 45) rarity = 'uncommon';   // 25%
+      else if (rarityRoll < 70) rarity = 'rare';       // 25%
+      else if (rarityRoll < 90) rarity = 'epic';       // 20%
+      else rarity = 'legendary';                        // 10%
     } else {
-      // Normal rewards
-      if (rarityRoll < 55) rarity = 'common';
-      else if (rarityRoll < 80) rarity = 'uncommon';
-      else if (rarityRoll < 92) rarity = 'rare';
-      else if (rarityRoll < 98) rarity = 'epic';
-      else if (rarityRoll < 99.5) rarity = 'legendary';
-      else if (rarityRoll < 99.8) rarity = 'mythic';
-      else if (rarityRoll < 99.95) rarity = 'exalted';
-      else if (rarityRoll < 99.99) rarity = 'celestial';
-      else if (rarityRoll < 99.999) rarity = 'transcendent';
-      else rarity = 'divine';
+      // Normal rewards - Common cards are more frequent
+      if (rarityRoll < 50) rarity = 'common';          // 50%
+      else if (rarityRoll < 75) rarity = 'uncommon';   // 25%
+      else if (rarityRoll < 90) rarity = 'rare';       // 15%
+      else if (rarityRoll < 98) rarity = 'epic';       // 8%
+      else rarity = 'legendary';                        // 2%
     }
     
     const pool = this.allCards[rarity];
@@ -643,7 +601,147 @@ export const CardDatabase = {
     }
     const card = this.allCards[rarity][Math.floor(Math.random() * this.allCards[rarity].length)];
     
-    return { ...card };
+    // Apply rarity-specific mechanics
+    const enhancedCard = this.applyRarityMechanics({ ...card });
+    
+    return enhancedCard;
+  }
+
+  /**
+   * Apply rarity-specific mechanics and bonuses
+   */
+  applyRarityMechanics(card) {
+    const rarityBonuses = {
+      common: {
+        multiplier: 1.0,
+        special: null,
+        color: '#9e9e9e',
+        glowColor: null
+      },
+      uncommon: {
+        multiplier: 1.3,
+        special: 'bonus_resources', // 10% chance to refund 1 energy
+        color: '#4caf50',
+        glowColor: null
+      },
+      rare: {
+        multiplier: 1.6,
+        special: 'splash_damage', // Towers deal 25% damage to nearby enemies
+        color: '#2196f3',
+        glowColor: '#64b5f6'
+      },
+      epic: {
+        multiplier: 2.0,
+        special: 'double_attack', // 20% chance to attack twice
+        color: '#9c27b0',
+        glowColor: '#ba68c8'
+      },
+      legendary: {
+        multiplier: 2.5,
+        special: 'multi_effect', // Cards have additional unique effects
+        color: '#ff9800',
+        glowColor: '#ffa726'
+      }
+    };
+
+    const bonus = rarityBonuses[card.rarity.toLowerCase()] || rarityBonuses.common;
+
+    // Apply stat multiplier
+    if (card.type === 'tower') {
+      card.damage = Math.floor(card.damage * bonus.multiplier);
+      card.range = Math.floor(card.range * (1 + (bonus.multiplier - 1) * 0.5));
+      card.attackSpeed = Math.max(200, Math.floor(card.attackSpeed / (1 + (bonus.multiplier - 1) * 0.3)));
+    } else if (card.type === 'spell') {
+      card.value = Math.floor((card.value || 0) * bonus.multiplier);
+      if (card.radius) {
+        card.radius = Math.floor(card.radius * (1 + (bonus.multiplier - 1) * 0.3));
+      }
+    } else if (card.type === 'resource') {
+      card.value = Math.floor((card.value || 0) * bonus.multiplier);
+    }
+
+    // Add special ability
+    card.specialAbility = bonus.special;
+    card.rarityColor = bonus.color;
+    card.glowColor = bonus.glowColor;
+
+    // Add unique legendary effects
+    if (card.rarity === 'Legendary' || card.rarity === 'legendary') {
+      card.legendaryEffect = this.getLegendaryEffect(card);
+    }
+
+    return card;
+  }
+
+  /**
+   * Get unique legendary effects
+   */
+  getLegendaryEffect(card) {
+    const legendaryEffects = {
+      tower: [
+        { name: 'Chain Reaction', description: 'Attacks chain to 2 additional enemies' },
+        { name: 'Crit Master', description: '30% chance to deal 3x damage' },
+        { name: 'Aura of Power', description: 'Nearby towers gain +20% damage' },
+        { name: 'Pierce', description: 'Attacks pierce through enemies' }
+      ],
+      spell: [
+        { name: 'Echo Cast', description: 'Spell casts twice' },
+        { name: 'Overcharge', description: 'Double effect, costs no energy' },
+        { name: 'Area Boost', description: 'Effect radius doubled' }
+      ],
+      resource: [
+        { name: 'Abundance', description: 'Gain double resources' },
+        { name: 'Chain Draw', description: 'Draw an additional card' }
+      ]
+    };
+
+    const effectPool = legendaryEffects[card.type] || legendaryEffects.tower;
+    return effectPool[Math.floor(Math.random() * effectPool.length)];
+  }
+
+  /**
+   * Get rarity display info
+   */
+  getRarityInfo(rarity) {
+    const rarityData = {
+      common: {
+        name: 'Common',
+        color: '#9e9e9e',
+        glowColor: null,
+        description: 'Basic cards',
+        dropRate: 'Very Common'
+      },
+      uncommon: {
+        name: 'Uncommon',
+        color: '#4caf50',
+        glowColor: null,
+        description: 'Enhanced cards with 10% energy refund chance',
+        dropRate: 'Common'
+      },
+      rare: {
+        name: 'Rare',
+        color: '#2196f3',
+        glowColor: '#64b5f6',
+        description: 'Powerful cards with splash damage',
+        dropRate: 'Uncommon'
+      },
+      epic: {
+        name: 'Epic',
+        color: '#9c27b0',
+        glowColor: '#ba68c8',
+        description: 'Elite cards with 20% double attack chance',
+        dropRate: 'Rare'
+      },
+      legendary: {
+        name: 'Legendary',
+        color: '#ff9800',
+        glowColor: '#ffa726',
+        description: 'Ultimate cards with unique legendary effects',
+        dropRate: 'Very Rare'
+      }
+    };
+
+    return rarityData[rarity.toLowerCase()] || rarityData.common;
   },
 
   /**
